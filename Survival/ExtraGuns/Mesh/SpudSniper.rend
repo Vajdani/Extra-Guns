@@ -1,0 +1,18 @@
+{
+	"lodList": [
+		{
+			"mesh": "$CONTENT_8103353f-b3d7-4a52-8cbf-fddcb5b8ae92/Objects/Mesh/SpudSniper.dae",
+			"subMeshList": [
+				{		
+					"textureList": [
+						"$CONTENT_8103353f-b3d7-4a52-8cbf-fddcb5b8ae92/Objects/Textures/green.png",
+						"$GAME_DATA/Textures/transparent.tga",
+						"$GAME_DATA/Textures/nonor_nor.tga"
+					],
+					"material": "DifAsgNor"	
+				}
+			],
+			"maxViewDistance": 1000.0
+		}
+	]
+}
