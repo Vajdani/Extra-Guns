@@ -8,6 +8,6 @@
 		"$SURVIVAL_DATA/Tools/ToolSets/carry.json",
 		
 		//ExtraGuns
-		"$SURVIVAL_DATA/ExtraGuns/new_weapons.json"
+		"$SURVIVAL_DATA/Weapons/SpudSniper/new_weapons.json"
 	]
 }

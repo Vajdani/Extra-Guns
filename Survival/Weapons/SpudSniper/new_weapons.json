@@ -1,0 +1,12 @@
+
+{
+	"toolList" : 
+	[
+        {
+			"uuid": "f9db01ab-5094-4d1d-b348-7dfca8a4d779",
+			"previewRenderable": "$SURVIVAL_DATA/Weapons/SpudSniper/Mesh/SpudSniperPreview.rend",
+			"previewRotation": [ 1, 0, 0, 0, 0, -1, 0, 1, 0 ],
+			"script": { "file": "$SURVIVAL_DATA/Weapons/SpudSniper/SpudSniper.lua", "class": "Sniper" }
+		}
+	]
+}

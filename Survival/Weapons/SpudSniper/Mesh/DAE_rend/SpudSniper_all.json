@@ -1,0 +1,118 @@
+{
+	"lodList": 
+	[
+		{
+			"mesh": "$SURVIVAL_DATA/Weapons/SpudSniper/Mesh/DAE_rend/SpudSniper_all.dae",
+			"includes" : ["POSITION", "UV0", "NORMAL", "TANGENTS", "BLEND_INDICES", "BLEND_WEIGHTS"],
+			"subMeshList" : [
+
+				{
+					"textureList":
+					[
+						"$GAME_DATA/Character/Char_Tools/Char_impactdriver/Char_impactdriver_dif.tga",
+						"$GAME_DATA/Character/Char_Tools/Char_impactdriver/Char_impactdriver_asg.tga",
+						"$GAME_DATA/Character/Char_Tools/Char_impactdriver/Char_impactdriver_nor.tga"
+
+					],
+					"color": "78211f",
+					"material": "DifAsgNor"
+				},
+
+				{
+				    "textureList":
+					[
+
+						"$GAME_DATA/Character/Char_Tools/Char_spudgun/Base/char_spudgun_base_dif.tga",
+						"$GAME_DATA/Character/Char_Tools/Char_spudgun/Base/char_spudgun_base_asg.tga",
+						"$GAME_DATA/Character/Char_Tools/Char_spudgun/Base/char_spudgun_base_nor.tga"
+
+				   	],
+					"color": "274a0e",
+					"material": "DifAsgNor"
+				},
+	
+				{
+				    "textureList":
+					[
+						"$GAME_DATA/Character/Char_Tools/Char_spudgun/Barrel/Barrel_frier/char_spudgun_barrel_frier_dif.tga",
+						"$GAME_DATA/Character/Char_Tools/Char_spudgun/Barrel/Barrel_frier/char_spudgun_barrel_frier_asg.tga",
+						"$GAME_DATA/Character/Char_Tools/Char_spudgun/Barrel/Barrel_frier/char_spudgun_barrel_frier_nor.tga"
+
+				   	],
+					"color": "c98605",
+					"material": "DifAsgNor"
+				},
+
+				{
+				    "textureList":
+					[
+
+						"$SURVIVAL_DATA/Objects/Textures/consumable/obj_consumable_ammo_dif.tga",
+						"$SURVIVAL_DATA/Objects/Textures/consumable/obj_consumable_ammo_asg.tga",
+						"$SURVIVAL_DATA/Objects/Textures/consumable/obj_consumable_ammo_nor.tga"
+				   	],
+					"color": "c98605",
+					"material": "DifAsgNor"
+				},
+
+				{
+					"textureList":
+					[
+						"$GAME_DATA/Objects/Textures/interactive/obj_interactive_mountablespudgun_dif.tga",
+						"$GAME_DATA/Objects/Textures/interactive/obj_interactive_mountablespudgun_asg.tga",
+						"$GAME_DATA/Objects/Textures/interactive/obj_interactive_mountablespudgun_nor.tga"
+					],
+					"color": "8f6200",
+					"material": "DifAsgNor"
+				},				
+
+				{
+					"textureList":
+					[
+						"$GAME_DATA/Character/Char_Tools/Char_spudgun/Stock/Stock_broom/char_spudgun_stock_broom_dif.tga",
+						"$GAME_DATA/Character/Char_Tools/Char_spudgun/Stock/Stock_broom/char_spudgun_stock_broom_asg.tga",
+						"$GAME_DATA/Character/Char_Tools/Char_spudgun/Stock/Stock_broom/char_spudgun_stock_broom_nor.tga"
+
+					],
+					"color": "78211f",
+					"material": "DifAsgNor"
+				},
+
+				{
+					"textureList": 
+					[
+						"$GAME_DATA/Character/Char_Tools/Char_spudgun/Sight/Sight_basic/char_spudgun_sight_basic_screw_dif.tga",
+						"$GAME_DATA/Character/Char_Tools/Char_spudgun/Sight/Sight_basic/char_spudgun_sight_basic_screw_asg.tga",
+						"$GAME_DATA/Character/Char_Tools/Char_spudgun/Sight/Sight_basic/char_spudgun_sight_basic_screw_nor.tga"
+					],
+					"color": "ffffff",
+					"material" : "DifAsgNor"
+				},
+
+				{
+					"textureList":
+					[
+						"$GAME_DATA/Character/Char_Tools/Char_spudgun/Sight/Sight_basic/char_spudgun_sight_basic_dif.tga",
+						"$GAME_DATA/Character/Char_Tools/Char_spudgun/Sight/Sight_basic/char_spudgun_sight_basic_asg.tga",
+						"$GAME_DATA/Character/Char_Tools/Char_spudgun/Sight/Sight_basic/char_spudgun_sight_basic_nor.tga"
+					],
+					"color": "b9a263",
+					"material": "DifAsgNor"
+				},
+
+				{
+				    "textureList":
+					[
+						"$GAME_DATA/Objects/Textures/interactive/obj_interactive_suspensionoffroad_dif.tga",
+						"$GAME_DATA/Objects/Textures/interactive/obj_interactive_suspensions_asg.tga",
+						"$GAME_DATA/Objects/Textures/interactive/obj_interactive_suspensions_nor.tga"
+				   	],
+					"color": "c98605",
+					"material": "DifAsgNor"
+				}
+
+			],
+			"maxViewDistance": 1000.0
+		}
+	]
+}
