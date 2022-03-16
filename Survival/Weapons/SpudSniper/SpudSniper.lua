@@ -169,6 +169,8 @@ function Sniper:client_onFixedUpdate( dt )
 	self.playerInv = sm.localPlayer.getInventory()
 
 	local carrots = sm.container.totalQuantity( self.playerInv, obj_plantables_carrot )
+	self.data.mag = carrots < 4 and carrots or self.data.mag
+
 	if carrots > 0 and (self.reloading or self.data.new) then
 		self.reloadDuration = self.reloadDuration + dt
 		if self.reloadDuration >= reloadDuration then
@@ -223,6 +225,12 @@ function Sniper:client_onReload()
 	end
 
 	return true
+end
+
+function Sniper:sv_consumeCarrot()
+	sm.container.beginTransaction()
+	sm.container.spend( self.playerInv, obj_plantables_carrot, 1 )
+	sm.container.endTransaction()
 end
 
 function Sniper:server_onDestroy()
@@ -680,7 +688,9 @@ function Sniper.cl_onPrimaryUse( self, state )
 
 			local owner = self.tool:getOwner()
 			if owner then
-				sm.projectile.projectileAttack( "potato", Damage, firePos, dir * fireMode.fireVelocity, owner, fakePosition, fakePositionSelf )
+				--sm.projectile.projectileAttack( "carrot", Damage, firePos, dir * fireMode.fireVelocity, owner, fakePosition, fakePositionSelf )
+				self.network:sendToServer("sv_shoot", { firePos = firePos, dir = dir * fireMode.fireVelocity })
+				self.network:sendToServer("sv_consumeCarrot")
 
 				self.data.mag = self.data.mag - 1
 				self.inaccurate = true
@@ -706,7 +716,20 @@ function Sniper.cl_onPrimaryUse( self, state )
 	end
 end
 
+function Sniper:sv_shoot( args )
+	sm.projectile.customProjectileAttack(
+		{ hvs = hvs_growing_carrot },
+		"seed",
+		Damage,
+		args.firePos,
+		args.dir,
+		self.player
+	)
+end
+
 function Sniper.cl_onSecondaryUse( self, state )
+	if self.reloading then return end
+
 	if state == sm.tool.interactState.start and not self.aiming then
 		self.aiming = true
 		self.tpAnimations.animations.idle.time = 0
