@@ -1,12 +1,13 @@
 {
 	"toolSetList": [
+		"$GAME_DATA/Tools/ToolSets/tools.json",
 		"$GAME_DATA/Tools/ToolSets/core.json",
-		
-		"$SURVIVAL_DATA/Tools/ToolSets/tools.json",
+		"$GAME_DATA/Tools/ToolSets/deprecated.json",
+
 		"$SURVIVAL_DATA/Tools/ToolSets/tools_shared.json",
 		"$SURVIVAL_DATA/Tools/ToolSets/spudguns.json",
 		"$SURVIVAL_DATA/Tools/ToolSets/carry.json",
-		
+
 		//ExtraGuns
 		"$SURVIVAL_DATA/Weapons/new_weapons.json"
 	]
