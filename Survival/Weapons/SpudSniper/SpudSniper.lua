@@ -166,6 +166,15 @@ end
 function Sniper:client_onFixedUpdate( dt )
 	if self.data == nil or self.fireCooldownTimer == nil or self.aimFireMode == nil then return end
 
+	--[[if self.reloading and self.aiming then
+		self.aiming = false
+		self.tpAnimations.animations.idle.time = 0
+
+		self:onAim( self.aiming )
+		self.tool:setMovementSlowDown( self.aiming )
+		self.network:sendToServer( "sv_n_onAim", self.aiming )
+	end]]
+
 	self.playerInv = sm.localPlayer.getInventory()
 
 	local carrots = sm.container.totalQuantity( self.playerInv, obj_plantables_carrot )
