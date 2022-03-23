@@ -1,8 +1,7 @@
 {
 	"lodList": [{
-		"mesh": "$SURVIVAL_DATA/Weapons/Mesh/Anim/ani_char_spudgun_fp_position.dae",
+		"mesh": "$GAME_DATA/Character/Char_Tools/Char_spudgun/Animations/ani_char_spudgun_position.dae",
 		"includes" : ["POSITION", "UV0", "NORMAL", "TANGENTS", "BLEND_INDICES", "BLEND_WEIGHTS"],
-
 		"maxViewDistance": 1000.0
 	}]
 }
