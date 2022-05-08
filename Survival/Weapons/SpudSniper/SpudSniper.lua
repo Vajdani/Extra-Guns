@@ -7,6 +7,8 @@ local Damage = 100
 local maxMagCapacity = 4
 local reloadDuration = 3
 local maxBreathHold = 3
+local baseFireVel = 260
+local fireVelIncrease = 40
 
 Sniper = class()
 
@@ -16,36 +18,47 @@ local renderables = {
 
 }
 
-local renderablesTp = {"$GAME_DATA/Character/Char_Male/Animations/char_male_tp_spudgun.rend", "$GAME_DATA/Character/Char_Tools/Char_spudgun/char_spudgun_tp_animlist.rend"}
-local renderablesFp = {"$GAME_DATA/Character/Char_Tools/Char_spudgun/char_spudgun_fp_animlist.rend"}
+local renderablesTp = {"$SURVIVAL_DATA/Weapons/SpudSniper/Mesh/Anim/rend/char_male_tp_spudgun.rend", "$SURVIVAL_DATA/Weapons/SpudSniper/Mesh/Anim/rend/char_spudgun_tp_animlist.rend"}
+local renderablesFp = {"$SURVIVAL_DATA/Weapons/SpudSniper/Mesh/Anim/rend/char_spudgun_fp_animlist.rend"}
 
 sm.tool.preloadRenderables( renderables )
 sm.tool.preloadRenderables( renderablesTp )
 sm.tool.preloadRenderables( renderablesFp )
 
 function Sniper:server_onCreate()
-	self.data = self.storage:load()
-	if self.data == nil then
-		self.data = {
+	self.sv = {}
+	self.sv.data = self.storage:load()
+	if self.sv.data == nil then
+		self.sv.data = {
 			new = true,
 			mag = 0
 		}
 	end
+
+	self.sv.player = nil
+	self.sv.playerInv = nil
+	self.sv.reloading = false
+	self.sv.reloadDuration = 0
+	self.sv.inaccuracyDuration = 1
+	self.sv.maxSpread = 8
+
+	self.network:setClientData( self.sv )
 end
 
 function Sniper.client_onCreate( self )
 	self.shootEffect = sm.effect.createEffect( "SpudgunBasic - BasicMuzzel" )
 	self.shootEffectFP = sm.effect.createEffect( "SpudgunBasic - FPBasicMuzzel" )
 
-	self.player = sm.localPlayer.getPlayer()
-	self.playerInv = nil
-	self.reloading = false
-	self.reloadDuration = 0
-	self.breathHold = false
-	self.breathHoldCount = 0
-	self.inaccurate = false
-	self.inaccuracyDuration = 1
-	self.maxSpread = 8
+	self.cl = {}
+	self.cl.data = {}
+	self.cl.reloading = false
+	self.cl.breathHold = false
+	self.cl.breathHoldCount = 0
+	self.cl.inaccurate = false
+	self.cl.inaccuracyDuration = 1
+	self.cl.maxSpread = 8
+
+	self.network:sendToServer("sv_setPlayer", sm.localPlayer.getPlayer())
 end
 
 function Sniper.client_onRefresh( self )
@@ -57,33 +70,33 @@ function Sniper.loadAnimations( self )
 	self.tpAnimations = createTpAnimations(
 		self.tool,
 		{
-			shoot = { "spudgun_shoot", { crouch = "spudgun_crouch_shoot" } },
-			aim = { "spudgun_aim", { crouch = "spudgun_crouch_aim" } },
-			aimShoot = { "spudgun_aim_shoot", { crouch = "spudgun_crouch_aim_shoot" } },
-			idle = { "spudgun_idle" },
-			pickup = { "spudgun_pickup", { nextAnimation = "idle" } },
-			putdown = { "spudgun_putdown" }
+			shoot = { "spudsniper_shoot", { crouch = "spudsniper_crouch_shoot" } },
+			aim = { "spudsniper_aim", { crouch = "spudsniper_crouch_aim" } },
+			aimShoot = { "spudsniper_aim_shoot", { crouch = "spudsniper_crouch_aim_shoot" } },
+			idle = { "spudsniper_idle" },
+			pickup = { "spudsniper_pickup", { nextAnimation = "idle" } },
+			putdown = { "spudsniper_putdown" }
 		}
 	)
 	local movementAnimations = {
-		idle = "spudgun_idle",
-		idleRelaxed = "spudgun_relax",
+		idle = "spudsniper_idle",
+		idleRelaxed = "spudsniper_relax",
 
-		sprint = "spudgun_sprint",
-		runFwd = "spudgun_run_fwd",
-		runBwd = "spudgun_run_bwd",
+		sprint = "spudsniper_sprint",
+		runFwd = "spudsniper_run_fwd",
+		runBwd = "spudsniper_run_bwd",
 
-		jump = "spudgun_jump",
-		jumpUp = "spudgun_jump_up",
-		jumpDown = "spudgun_jump_down",
+		jump = "spudsniper_jump",
+		jumpUp = "spudsniper_jump_up",
+		jumpDown = "spudsniper_jump_down",
 
-		land = "spudgun_jump_land",
-		landFwd = "spudgun_jump_land_fwd",
-		landBwd = "spudgun_jump_land_bwd",
+		land = "spudsniper_jump_land",
+		landFwd = "spudsniper_jump_land_fwd",
+		landBwd = "spudsniper_jump_land_bwd",
 
-		crouchIdle = "spudgun_crouch_idle",
-		crouchFwd = "spudgun_crouch_fwd",
-		crouchBwd = "spudgun_crouch_bwd"
+		crouchIdle = "spudsniper_crouch_idle",
+		crouchFwd = "spudsniper_crouch_fwd",
+		crouchBwd = "spudsniper_crouch_bwd"
 	}
 
 	for name, animation in pairs( movementAnimations ) do
@@ -96,20 +109,20 @@ function Sniper.loadAnimations( self )
 		self.fpAnimations = createFpAnimations(
 			self.tool,
 			{
-				equip = { "spudgun_pickup", { nextAnimation = "idle" } },
-				unequip = { "spudgun_putdown" },
+				equip = { "spudsniper_pickup", { nextAnimation = "idle" } },
+				unequip = { "spudsniper_putdown" },
 
-				idle = { "spudgun_idle", { looping = true } },
-				shoot = { "spudgun_shoot", { nextAnimation = "idle" } },
+				idle = { "spudsniper_idle", { looping = true } },
+				shoot = { "spudsniper_shoot", { nextAnimation = "idle" } },
 
-				aimInto = { "spudgun_aim_into", { nextAnimation = "aimIdle" } },
-				aimExit = { "spudgun_aim_exit", { nextAnimation = "idle", blendNext = 0 } },
-				aimIdle = { "spudgun_aim_idle", { looping = true} },
-				aimShoot = { "spudgun_aim_shoot", { nextAnimation = "aimIdle"} },
+				aimInto = { "spudsniper_aim_into", { nextAnimation = "aimIdle" } },
+				aimExit = { "spudsniper_aim_exit", { nextAnimation = "idle", blendNext = 0 } },
+				aimIdle = { "spudsniper_aim_idle", { looping = true} },
+				aimShoot = { "spudsniper_aim_shoot", { nextAnimation = "aimIdle"} },
 
-				sprintInto = { "spudgun_sprint_into", { nextAnimation = "sprintIdle",  blendNext = 0.2 } },
-				sprintExit = { "spudgun_sprint_exit", { nextAnimation = "idle",  blendNext = 0 } },
-				sprintIdle = { "spudgun_sprint_idle", { looping = true } },
+				sprintInto = { "spudsniper_sprint_into", { nextAnimation = "sprintIdle",  blendNext = 0.2 } },
+				sprintExit = { "spudsniper_sprint_exit", { nextAnimation = "idle",  blendNext = 0 } },
+				sprintIdle = { "spudsniper_sprint_idle", { looping = true } },
 			}
 		)
 	end
@@ -120,7 +133,7 @@ function Sniper.loadAnimations( self )
 		spreadIncrement = 2.6,
 		spreadMinAngle = .25,
 		spreadMaxAngle = 8,
-		fireVelocity = 260.0,
+		fireVelocity = baseFireVel,
 
 		minDispersionStanding = 0.1,
 		minDispersionCrouching = 0.04,
@@ -134,8 +147,8 @@ function Sniper.loadAnimations( self )
 		spreadCooldown = 0.18,
 		spreadIncrement = 1.3,
 		spreadMinAngle = 0,
-		spreadMaxAngle = self.maxSpread,
-		fireVelocity =  260.0,
+		spreadMaxAngle = self.cl.maxSpread,
+		fireVelocity =  baseFireVel,
 
 		minDispersionStanding = 0.01,
 		minDispersionCrouching = 0.01,
@@ -162,92 +175,97 @@ function Sniper.loadAnimations( self )
 
 end
 
+function Sniper:client_onClientDataUpdate( data )
+	self.cl.data = data.data
+	self.cl.reloading = data.reloading
+end
+
+function Sniper:sv_setPlayer( player )
+	self.sv.player = player
+	self.sv.playerInv = player:getInventory()
+end
+
+function Sniper:server_onFixedUpdate( dt )
+	if self.sv.data == nil or self.sv.player == nil or self.fireCooldownTimer == nil or self.aimFireMode == nil then return end
+
+	local carrots = sm.container.totalQuantity( self.sv.playerInv, obj_plantables_carrot )
+	self.sv.data.mag = carrots < 4 and carrots or self.sv.data.mag
+
+	if not self.cl.reloading and self.cl.data.mag == 0 and carrots > 0 then
+		self:sv_reload()
+	end
+
+	if carrots > 0 and (self.sv.reloading or self.sv.data.new) then
+		self.sv.reloadDuration = self.sv.reloadDuration + dt
+		if self.sv.reloadDuration >= reloadDuration then
+			self.sv.data.mag = carrots >= maxMagCapacity and maxMagCapacity or carrots
+			self.sv.data.new = false
+			self.sv.reloading = false
+			self.sv.reloadDuration = 0
+			self.network:setClientData( self.sv )
+		end
+	end
+end
 
 function Sniper:client_onFixedUpdate( dt )
-	if self.data == nil or self.fireCooldownTimer == nil or self.aimFireMode == nil then return end
+	if self.cl.data == nil or self.fireCooldownTimer == nil then return end
 
-	--[[if self.reloading and self.aiming then
-		self.aiming = false
-		self.tpAnimations.animations.idle.time = 0
+	local character = self.sv.player:getCharacter()
+	self.cl.breathHold = character ~= nil and character:isCrouching() and character:isAiming()
 
-		self:onAim( self.aiming )
-		self.tool:setMovementSlowDown( self.aiming )
-		self.network:sendToServer( "sv_n_onAim", self.aiming )
-	end]]
-
-	self.playerInv = sm.localPlayer.getInventory()
-
-	local carrots = sm.container.totalQuantity( self.playerInv, obj_plantables_carrot )
-	self.data.mag = carrots < 4 and carrots or self.data.mag
-
-	if carrots > 0 and (self.reloading or self.data.new) then
-		self.reloadDuration = self.reloadDuration + dt
-		if self.reloadDuration >= reloadDuration then
-			self.data.mag = carrots >= maxMagCapacity and maxMagCapacity or carrots
-			self.data.new = false
-			self.reloading = false
-			self.reloadDuration = 0
-		end
-	end
-
-	if not self.reloading and self.data.mag == 0 and self.fireCooldownTimer <= 0.0 then
-		self:cl_reload()
-	end
-
-	if self.inaccurate then
-		self.inaccuracyDuration = self.inaccuracyDuration - dt
-		self.maxSpread = 15
-		self.aimFireMode.spreadMinAngle = self.maxSpread / 4
-		self.normalFireMode.spreadMinAngle = self.maxSpread / 4
-		if self.inaccuracyDuration <= 0 then
-			self.inaccurate = false
-			self.inaccuracyDuration = self.normalFireMode.fireCooldown + 0.5
+	if self.cl.inaccurate then
+		self.cl.inaccuracyDuration = self.cl.inaccuracyDuration - dt
+		self.cl.maxSpread = 15
+		self.aimFireMode.spreadMinAngle = self.cl.maxSpread / 4
+		self.normalFireMode.spreadMinAngle = self.cl.maxSpread / 4
+		if self.cl.inaccuracyDuration <= 0 then
+			self.cl.inaccurate = false
+			self.cl.inaccuracyDuration = self.normalFireMode.fireCooldown + 0.5
 		end
 	else
-		self.maxSpread = 8
+		self.cl.maxSpread = 8
 		self.aimFireMode.spreadMinAngle = 0
 		self.normalFireMode.spreadMinAngle = 0
 	end
 
-	if self.breathHold and not self.reloading and self.fireCooldownTimer <= 0.0 then
-		self.breathHoldCount = self.breathHoldCount < maxBreathHold and self.breathHoldCount + dt or maxBreathHold
+	if self.cl.breathHold and not self.cl.reloading and self.fireCooldownTimer <= 0.0 then
+		self.cl.breathHoldCount = self.cl.breathHoldCount < maxBreathHold and self.cl.breathHoldCount + dt or maxBreathHold
 
-		if self.breathHoldCount < maxBreathHold + 0.025 then
-			self.aimFireMode.spreadMaxAngle = self.maxSpread - self.breathHoldCount
-			self.normalFireMode.spreadMaxAngle = self.maxSpread - self.breathHoldCount
+		if self.cl.breathHoldCount < maxBreathHold + 0.025 then
+			self.aimFireMode.spreadMaxAngle = self.cl.maxSpread - self.cl.breathHoldCount
+			self.normalFireMode.spreadMaxAngle = self.cl.maxSpread - self.cl.breathHoldCount
+			self.aimFireMode.fireVelocity = baseFireVel + fireVelIncrease * self.cl.breathHoldCount
 		end
 	else
-		self.aimFireMode.spreadMaxAngle = self.maxSpread
-		self.normalFireMode.spreadMaxAngle = self.maxSpread
-		self.breathHoldCount = 0
+		self.aimFireMode.spreadMaxAngle = self.cl.maxSpread
+		self.normalFireMode.spreadMaxAngle = self.cl.maxSpread
+		self.cl.breathHoldCount = 0
 	end
 end
 
-function Sniper:cl_reload()
-	self.reloading = true
-	sm.audio.play("PaintTool - Reload")
+function Sniper:sv_reload()
+	self.sv.reloading = true
+	self.network:setClientData( self.sv )
+	self.network:sendToClients("cl_reload", self.sv.player:getCharacter():getWorldPosition())
+end
+
+function Sniper:cl_reload( pos )
+	sm.audio.play("PaintTool - Reload", pos)
 end
 
 function Sniper:client_onReload()
-	if self.data.mag < maxMagCapacity and not self.reloading then
-		self:cl_reload()
+	if self.cl.data.mag < maxMagCapacity and not self.cl.reloading then
+		self.network:sendToServer("sv_reload")
 	end
 
 	return true
 end
 
-function Sniper:sv_consumeCarrot()
-	sm.container.beginTransaction()
-	sm.container.spend( self.playerInv, obj_plantables_carrot, 1 )
-	sm.container.endTransaction()
-end
-
 function Sniper:server_onDestroy()
 	sm.container.beginTransaction()
-	sm.container.collect( self.playerInv, obj_plantables_carrot, self.data.mag )
+	sm.container.collect( self.sv.playerInv, obj_plantables_carrot, self.sv.data.mag )
 	sm.container.endTransaction()
 end
-
 
 function Sniper.client_onUpdate( self, dt )
 
@@ -648,13 +666,13 @@ function Sniper.calculateFpMuzzlePos( self )
 end
 
 function Sniper.cl_onPrimaryUse( self, state )
-	if self.tool:getOwner().character == nil then
+	if self.tool:getOwner().character == nil or self.cl.reloading then
 		return
 	end
 
 	if self.fireCooldownTimer <= 0.0 and state == sm.tool.interactState.start then
 
-		if self.data.mag > 0 and (not sm.game.getEnableAmmoConsumption() or sm.container.canSpend( sm.localPlayer.getInventory(), obj_plantables_carrot, 1 ) ) then
+		if self.cl.data.mag > 0 and (not sm.game.getEnableAmmoConsumption() or sm.container.canSpend( sm.localPlayer.getInventory(), obj_plantables_carrot, 1 ) ) then
 			local firstPerson = self.tool:isInFirstPersonView()
 
 			local dir = sm.localPlayer.getDirection()
@@ -699,11 +717,7 @@ function Sniper.cl_onPrimaryUse( self, state )
 			if owner then
 				--sm.projectile.projectileAttack( "carrot", Damage, firePos, dir * fireMode.fireVelocity, owner, fakePosition, fakePositionSelf )
 				self.network:sendToServer("sv_shoot", { firePos = firePos, dir = dir * fireMode.fireVelocity })
-				self.network:sendToServer("sv_consumeCarrot")
-
-				self.data.mag = self.data.mag - 1
-				self.inaccurate = true
-				self.inaccuracyDuration = self.normalFireMode.fireCooldown + 0.5
+				self.cl.inaccurate = true
 			end
 
 			-- Timers
@@ -726,18 +740,27 @@ function Sniper.cl_onPrimaryUse( self, state )
 end
 
 function Sniper:sv_shoot( args )
+	self.sv.data.mag = self.sv.data.mag - 1
+	self.sv.inaccuracyDuration = self.normalFireMode.fireCooldown + 0.5
+
 	sm.projectile.customProjectileAttack(
 		{ hvs = hvs_growing_carrot },
 		"seed",
 		Damage,
 		args.firePos,
 		args.dir,
-		self.player
+		self.sv.player
 	)
+
+	sm.container.beginTransaction()
+	sm.container.spend( self.sv.playerInv, obj_plantables_carrot, 1 )
+	sm.container.endTransaction()
+
+	self.network:setClientData( self.sv )
 end
 
 function Sniper.cl_onSecondaryUse( self, state )
-	if self.reloading then return end
+	if self.cl.reloading then return end
 
 	if state == sm.tool.interactState.start and not self.aiming then
 		self.aiming = true
@@ -759,16 +782,14 @@ function Sniper.cl_onSecondaryUse( self, state )
 end
 
 function Sniper.client_onEquippedUpdate( self, primaryState, secondaryState )
-	self.breathHold = (self.player:getCharacter():isCrouching() and secondaryState == sm.tool.interactState.hold) and true or false
-
-	if self.breathHold then
-		sm.gui.displayAlertText( "Breath hold: #ff9d00"..tostring(("%.2f"):format(self.breathHoldCount)).." #ffffff/ "..tostring(maxBreathHold), 1 )
+	if self.cl.breathHold then
+		sm.gui.displayAlertText( "Breath hold: #ff9d00"..tostring(("%.2f"):format(self.cl.breathHoldCount)).." #ffffff/ "..tostring(maxBreathHold), 1 )
 	end
 
-	if not self.reloading then
-		sm.gui.setProgressFraction( self.data.mag/maxMagCapacity )
+	if not self.cl.reloading then
+		sm.gui.setProgressFraction( self.sv.data.mag/maxMagCapacity )
 	else
-		sm.gui.setProgressFraction( self.reloadDuration/reloadDuration )
+		sm.gui.setProgressFraction( self.sv.reloadDuration/reloadDuration )
 	end
 
 	if primaryState ~= self.prevPrimaryState then

@@ -6,20 +6,20 @@
 
 			
 
-			{ "name" : "spudgun_idle", 					"file" : "$SURVIVAL_DATA/Weapons/SpudSniper/Mesh/Anim/ani_char_male_fp_spudgun_normal_idle.dae" },
-			{ "name" : "spudgun_shoot", 				"file" : "$SURVIVAL_DATA/Weapons/SpudSniper/Mesh/Anim/ani_char_male_fp_spudgun_normal_shoot.dae" },
+			{ "name" : "spudnsiper_idle", 					"file" : "$SURVIVAL_DATA/Weapons/SpudSniper/Mesh/Anim/ani_char_male_fp_spudgun_normal_idle.dae" },
+			{ "name" : "spudnsiper_shoot", 				"file" : "$SURVIVAL_DATA/Weapons/SpudSniper/Mesh/Anim/ani_char_male_fp_spudgun_normal_shoot.dae" },
 
-			{ "name" : "spudgun_pickup", 				"file" : "$SURVIVAL_DATA/Weapons/SpudSniper/Mesh/Anim/ani_char_male_fp_spudgun_normal_pickup.dae" },
-			{ "name" : "spudgun_putdown", 				"file" : "$SURVIVAL_DATA/Weapons/SpudSniper/Mesh/Anim/ani_char_male_fp_spudgun_normal_putdown.dae" },
+			{ "name" : "spudnsiper_pickup", 				"file" : "$SURVIVAL_DATA/Weapons/SpudSniper/Mesh/Anim/ani_char_male_fp_spudgun_normal_pickup.dae" },
+			{ "name" : "spudnsiper_putdown", 				"file" : "$SURVIVAL_DATA/Weapons/SpudSniper/Mesh/Anim/ani_char_male_fp_spudgun_normal_putdown.dae" },
 
-			{ "name" : "spudgun_sprint_into", 			"file" : "$SURVIVAL_DATA/Weapons/SpudSniper/Mesh/Anim/ani_char_male_fp_spudgun_sprint_into.dae" },
-			{ "name" : "spudgun_sprint_exit", 			"file" : "$SURVIVAL_DATA/Weapons/SpudSniper/Mesh/Anim/ani_char_male_fp_spudgun_sprint_exit.dae" },
-			{ "name" : "spudgun_sprint_idle", 			"file" : "$SURVIVAL_DATA/Weapons/SpudSniper/Mesh/Anim/ani_char_male_fp_spudgun_sprint_idle.dae" },
+			{ "name" : "spudnsiper_sprint_into", 			"file" : "$SURVIVAL_DATA/Weapons/SpudSniper/Mesh/Anim/ani_char_male_fp_spudgun_sprint_into.dae" },
+			{ "name" : "spudnsiper_sprint_exit", 			"file" : "$SURVIVAL_DATA/Weapons/SpudSniper/Mesh/Anim/ani_char_male_fp_spudgun_sprint_exit.dae" },
+			{ "name" : "spudnsiper_sprint_idle", 			"file" : "$SURVIVAL_DATA/Weapons/SpudSniper/Mesh/Anim/ani_char_male_fp_spudgun_sprint_idle.dae" },
 
-			{ "name" : "spudgun_aim_into", 				"file" : "$SURVIVAL_DATA/Weapons/SpudSniper/Mesh/Anim/ani_char_male_fp_spudgun_aim_into.dae" },
-			{ "name" : "spudgun_aim_exit", 				"file" : "$SURVIVAL_DATA/Weapons/SpudSniper/Mesh/Anim/ani_char_male_fp_spudgun_aim_exit.dae" },
-			{ "name" : "spudgun_aim_shoot", 			"file" : "$SURVIVAL_DATA/Weapons/SpudSniper/Mesh/Anim/ani_char_male_fp_spudgun_aim_shoot.dae" },
-			{ "name" : "spudgun_aim_idle", 				"file" : "$SURVIVAL_DATA/Weapons/SpudSniper/Mesh/Anim/ani_char_male_fp_spudgun_aim_idle.dae" }
+			{ "name" : "spudnsiper_aim_into", 				"file" : "$SURVIVAL_DATA/Weapons/SpudSniper/Mesh/Anim/ani_char_male_fp_spudgun_aim_into.dae" },
+			{ "name" : "spudnsiper_aim_exit", 				"file" : "$SURVIVAL_DATA/Weapons/SpudSniper/Mesh/Anim/ani_char_male_fp_spudgun_aim_exit.dae" },
+			{ "name" : "spudnsiper_aim_shoot", 			"file" : "$SURVIVAL_DATA/Weapons/SpudSniper/Mesh/Anim/ani_char_male_fp_spudgun_aim_shoot.dae" },
+			{ "name" : "spudnsiper_aim_idle", 				"file" : "$SURVIVAL_DATA/Weapons/SpudSniper/Mesh/Anim/ani_char_male_fp_spudgun_aim_idle.dae" }
 
 
 
