@@ -1,0 +1,64 @@
+{
+	"partList": [
+		{
+			"uuid": "20c3398b-7b00-4861-ac98-2a55495535b4",
+			"name": "obj_throwable_grenade",
+			"renderable": "$SURVIVAL_DATA/Character/Char_Glowstick/char_glowstick.rend",
+			"color": "ffffff",
+			"sphere": {
+				"diameter": 2
+			},
+			"scripted": {
+				"filename": "$SURVIVAL_DATA/Weapons/Grenades/grenade.lua",
+				"classname": "Grenade",
+				"data": {}
+			},
+			"rotationSet": "PropFull",
+			"sticky": "-X+X-Y+Y-Z+Z",
+			"physicsMaterial": "Metal",
+			"ratings": {
+				"density": 2,
+				"durability": 5,
+				"friction": 5,
+				"buoyancy": 2
+			},
+			"flammable": false,
+            "consumable": true,
+            "stackSize": 5,
+			"restrictions": {
+				"erasable": false
+			},
+            "autoTool": "6832cee6-b438-4ca8-a308-fcd57cac641c"
+		},
+        {
+			"uuid": "c0dcaf49-cc53-404f-931f-255e1fa8f6b5",
+			"name": "obj_throwable_grenade",
+			"renderable": "$SURVIVAL_DATA/Character/Char_Glowstick/char_glowstick.rend",
+			"color": "ffffff",
+			"sphere": {
+				"diameter": 2
+			},
+			"scripted": {
+				"filename": "$SURVIVAL_DATA/Weapons/Grenades/grenade.lua",
+				"classname": "Grenade",
+				"data": {}
+			},
+			"rotationSet": "PropFull",
+			"sticky": "-X+X-Y+Y-Z+Z",
+			"physicsMaterial": "Metal",
+			"ratings": {
+				"density": 2,
+				"durability": 5,
+				"friction": 5,
+				"buoyancy": 2
+			},
+			"flammable": false,
+            "consumable": true,
+            "stackSize": 5,
+			"restrictions": {
+				"erasable": false
+			},
+            "autoTool": "6832cee6-b438-4ca8-a308-fcd57cac641c"
+		}
+    ]
+}

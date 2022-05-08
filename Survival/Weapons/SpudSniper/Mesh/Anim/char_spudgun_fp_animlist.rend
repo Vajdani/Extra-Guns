@@ -1,0 +1,8 @@
+{
+	"lodList": [{
+		"mesh": "$SURVIVAL_DATA/Weapons/Mesh/Anim/ani_char_spudgun_fp_position.dae",
+		"includes" : ["POSITION", "UV0", "NORMAL", "TANGENTS", "BLEND_INDICES", "BLEND_WEIGHTS"],
+
+		"maxViewDistance": 1000.0
+	}]
+}

@@ -7,6 +7,40 @@
 			"previewRenderable": "$SURVIVAL_DATA/Weapons/SpudSniper/Mesh/SpudSniperPreview.rend",
 			"previewRotation": [ 1, 0, 0, 0, 0, -1, 0, 1, 0 ],
 			"script": { "file": "$SURVIVAL_DATA/Weapons/SpudSniper/SpudSniper.lua", "class": "Sniper" }
+		},
+		{
+			"uuid": "6832cee6-b438-4ca8-a308-fcd57cac641c",
+			"previewRenderable": "$GAME_DATA/Character/Char_Tools/char_spudgun_preview.rend",
+			"previewRotation": [ 1, 0, 0, 0, 0, -1, 0, 1, 0 ],
+			"script": {
+				"file": "$SURVIVAL_DATA/Scripts/game/tools/Glowstick.lua",
+				"class": "Glowstick",
+				"data": {
+					"renderableIndex": 2,
+					"item": "20c3398b-7b00-4861-ac98-2a55495535b4"
+				}
+			},
+			"autoTool": true
+		},
+		{
+			"uuid": "a9ba88ea-ccd7-48a7-8fa0-3d8076110335",
+			"previewRenderable": "$GAME_DATA/Character/Char_Tools/char_spudgun_preview.rend",
+			"previewRotation": [ 1, 0, 0, 0, 0, -1, 0, 1, 0 ],
+			"script": {
+				"file": "$SURVIVAL_DATA/Scripts/game/tools/Glowstick.lua",
+				"class": "Glowstick",
+				"data": {
+					"renderableIndex": 3,
+					"item": "c0dcaf49-cc53-404f-931f-255e1fa8f6b5"
+				}
+			},
+			"autoTool": true
+		},
+		{
+			"uuid": "3a5c4f59-c713-4e13-9142-4b692934c2ca",
+			"previewRenderable": "$GAME_DATA/Character/Char_Tools/char_spudgun_preview.rend",
+			"previewRotation": [ 1, 0, 0, 0, 0, -1, 0, 1, 0 ],
+			"script": { "file": "$SURVIVAL_DATA/Weapons/GrenadeLauncher/GrenadeLauncher.lua", "class": "Launcher" }
 		}
 	]
 }
