@@ -261,6 +261,26 @@ function Sniper:client_onReload()
 	return true
 end
 
+function Sniper:sv_shoot( args )
+	self.sv.data.mag = self.sv.data.mag - 1
+	self.sv.inaccuracyDuration = self.normalFireMode.fireCooldown + 0.5
+
+	sm.projectile.customProjectileAttack(
+		{ hvs = hvs_growing_carrot },
+		"seed",
+		Damage,
+		args.firePos,
+		args.dir,
+		self.sv.player
+	)
+
+	sm.container.beginTransaction()
+	sm.container.spend( self.sv.playerInv, obj_plantables_carrot, 1 )
+	sm.container.endTransaction()
+
+	self.network:setClientData( self.sv )
+end
+
 function Sniper:server_onDestroy()
 	sm.container.beginTransaction()
 	sm.container.collect( self.sv.playerInv, obj_plantables_carrot, self.sv.data.mag )
@@ -737,26 +757,6 @@ function Sniper.cl_onPrimaryUse( self, state )
 			sm.audio.play( "PotatoRifle - NoAmmo" )
 		end
 	end
-end
-
-function Sniper:sv_shoot( args )
-	self.sv.data.mag = self.sv.data.mag - 1
-	self.sv.inaccuracyDuration = self.normalFireMode.fireCooldown + 0.5
-
-	sm.projectile.customProjectileAttack(
-		{ hvs = hvs_growing_carrot },
-		"seed",
-		Damage,
-		args.firePos,
-		args.dir,
-		self.sv.player
-	)
-
-	sm.container.beginTransaction()
-	sm.container.spend( self.sv.playerInv, obj_plantables_carrot, 1 )
-	sm.container.endTransaction()
-
-	self.network:setClientData( self.sv )
 end
 
 function Sniper.cl_onSecondaryUse( self, state )
