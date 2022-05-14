@@ -1,31 +1,29 @@
 dofile "$GAME_DATA/Scripts/game/AnimationUtil.lua"
 dofile "$SURVIVAL_DATA/Scripts/util.lua"
 dofile "$SURVIVAL_DATA/Scripts/game/survival_shapes.lua"
-dofile "$SURVIVAL_DATA/Scripts/game/survivalPlayer.lua"
 
-local Damage = 100
+local Damage = 24
 local maxMagCapacity = 4
-local reloadDuration = 3
-local maxBreathHold = 3
-local baseFireVel = 260
-local fireVelIncrease = 40
+local reloadDuration = 2
 
-Sniper = class()
+PotatoShotgun = class()
 
 local renderables = {
-
-	"$SURVIVAL_DATA/Weapons/SpudSniper/Mesh/DAE_rend/SpudSniper_all.rend"
-
+	"$GAME_DATA/Character/Char_Tools/Char_spudgun/Base/char_spudgun_base_basic.rend",
+	"$GAME_DATA/Character/Char_Tools/Char_spudgun/Barrel/Barrel_frier/char_spudgun_barrel_frier.rend",
+	"$GAME_DATA/Character/Char_Tools/Char_spudgun/Sight/Sight_basic/char_spudgun_sight_basic.rend",
+	"$GAME_DATA/Character/Char_Tools/Char_spudgun/Stock/Stock_broom/char_spudgun_stock_broom.rend",
+	"$GAME_DATA/Character/Char_Tools/Char_spudgun/Tank/Tank_basic/char_spudgun_tank_basic.rend"
 }
 
-local renderablesTp = {"$SURVIVAL_DATA/Weapons/SpudSniper/Mesh/Anim/rend/char_male_tp_spudgun.rend", "$SURVIVAL_DATA/Weapons/SpudSniper/Mesh/Anim/rend/char_spudgun_tp_animlist.rend"}
-local renderablesFp = {"$SURVIVAL_DATA/Weapons/SpudSniper/Mesh/Anim/rend/char_spudgun_fp_animlist.rend"}
+local renderablesTp = {"$GAME_DATA/Character/Char_Male/Animations/char_male_tp_spudgun.rend", "$GAME_DATA/Character/Char_Tools/Char_spudgun/char_spudgun_tp_animlist.rend"}
+local renderablesFp = {"$GAME_DATA/Character/Char_Tools/Char_spudgun/char_spudgun_fp_animlist.rend"}
 
 sm.tool.preloadRenderables( renderables )
 sm.tool.preloadRenderables( renderablesTp )
 sm.tool.preloadRenderables( renderablesFp )
 
-function Sniper:server_onCreate()
+function PotatoShotgun:server_onCreate()
 	self.sv = {}
 	self.sv.data = self.storage:load()
 	if self.sv.data == nil then
@@ -40,15 +38,79 @@ function Sniper:server_onCreate()
 	self.sv.playerInv = nil
 	self.sv.reloading = false
 	self.sv.reloadDuration = 0
-	self.sv.inaccuracyDuration = 1
-	self.sv.maxSpread = 8
 
 	self.network:setClientData( self.sv )
 end
 
-function Sniper.client_onCreate( self )
-	self.shootEffect = sm.effect.createEffect( "SpudgunBasic - BasicMuzzel" )
-	self.shootEffectFP = sm.effect.createEffect( "SpudgunBasic - FPBasicMuzzel" )
+function PotatoShotgun:sv_shoot()
+	self.sv.data.mag = self.sv.data.mag - 1
+	self.network:setClientData( self.sv )
+end
+
+function PotatoShotgun:server_onFixedUpdate( dt )
+	local potatoes = sm.container.totalQuantity( self.sv.playerInv, obj_plantables_potato )
+	if potatoes > 0 and (self.sv.reloading or self.sv.data.new) then
+		self.sv.reloadDuration = self.sv.reloadDuration + dt
+		if self.sv.reloadDuration >= reloadDuration then
+			self.sv.data.mag = potatoes >= maxMagCapacity and maxMagCapacity or potatoes
+			self.sv.data.new = false
+			self.sv.reloading = false
+			self.sv.reloadDuration = 0
+			self.network:setClientData( self.sv )
+		end
+	end
+end
+
+function PotatoShotgun:client_onFixedUpdate( dt )
+	if self.cl.data == nil or self.cl.player == nil or self.tpAnimations == nil or self.fpAnimations == nil then return end
+
+	local potatoes = sm.container.totalQuantity( self.cl.playerInv, obj_plantables_potato )
+	self.cl.data.mag = potatoes < 4 and potatoes or self.cl.data.mag
+
+	if not self.cl.reloading and self.cl.data.mag == 0 and potatoes > 0 and self.cl.data.autoReload and self.fireCooldownTimer <= 0 then
+		self:cl_reload()
+	end
+
+	if self.cl.reloading then
+		if self.fpAnimations.currentAnimation ~= "reload" then
+			setFpAnimation( self.fpAnimations, "reload", 0.05 )
+		end
+
+		self.cl.reloadDuration = self.cl.reloadDuration + dt
+		if self.cl.reloadDuration >= maxMagCapacity then
+			self.cl.reloadDuration = 0
+		end
+	else
+		self.cl.reloadDuration = 0
+	end
+end
+
+function PotatoShotgun:sv_setPlayer( player )
+	self.sv.player = player
+	self.sv.playerInv = player:getInventory()
+end
+
+function PotatoShotgun:sv_toggleAutoReload()
+	self.sv.data.autoReload = not self.sv.data.autoReload
+	self.storage:save( self.sv.data )
+	self.network:setClientData( self.sv )
+end
+
+function PotatoShotgun:client_onClientDataUpdate( data )
+	if self.tool:isLocal() then
+		self.cl.data = data.data
+
+		if self.cl.reloading and not data.reloading then
+			setTpAnimation( self.tpAnimations, "idle", 5.0 )
+		end
+
+		self.cl.reloading = data.reloading
+	end
+end
+
+function PotatoShotgun.client_onCreate( self )
+	self.shootEffect = sm.effect.createEffect( "SpudgunFrier - FrierMuzzel" )
+	self.shootEffectFP = sm.effect.createEffect( "SpudgunFrier - FPFrierMuzzel" )
 
 	self.cl = {}
 	self.cl.data = {}
@@ -56,53 +118,96 @@ function Sniper.client_onCreate( self )
 	self.cl.playerInv = self.cl.player:getInventory()
 	self.cl.reloadDuration = 0
 
-	self.cl.breathHold = false
-	self.cl.breathHoldCount = 0
-	self.cl.inaccurate = false
-	self.cl.inaccuracyDuration = 1
-	self.cl.maxSpread = 8
-
 	self.network:sendToServer("sv_setPlayer", sm.localPlayer.getPlayer())
 end
 
-function Sniper.client_onRefresh( self )
+function PotatoShotgun:client_onToggle()
+	local text = self.cl.data.autoReload and "#ff0000OFF" or "#00ff00ON"
+	sm.gui.displayAlertText("Auto reloading is now "..text, 2.5)
+	self.network:sendToServer("sv_toggleAutoReload")
+
+	return true
+end
+
+function PotatoShotgun:client_onReload()
+	self:cl_reload()
+
+	return true
+end
+
+function PotatoShotgun:cl_reload()
+	if self.cl.data.mag == maxMagCapacity then return true end
+
+	if self.aiming then
+		self.aiming = false
+		self.tpAnimations.animations.idle.time = 0
+
+		self:onAim( self.aiming )
+		self.tool:setMovementSlowDown( self.aiming )
+		self.network:sendToServer( "sv_n_onAim", self.aiming )
+	end
+
+	local pos = sm.localPlayer.getPlayer().character:getWorldPosition()
+	self:onReload( pos )
+	setFpAnimation( self.fpAnimations, "reload", 0.05 )
+	self.network:sendToServer("sv_n_onReload", pos)
+end
+
+function PotatoShotgun.sv_n_onReload( self, pos )
+	self.sv.reloading = true
+	self.network:setClientData( self.sv )
+	self.network:sendToClients( "cl_n_onReload", pos )
+end
+
+function PotatoShotgun.cl_n_onReload( self, pos )
+	if not self.tool:isLocal() and self.tool:isEquipped() then
+		self:onReload()
+	end
+end
+
+function PotatoShotgun.onReload( self, pos )
+	setTpAnimation( self.tpAnimations, "reload", 10.0 )
+	sm.audio.play("PotatoRifle - Reload", pos)
+end
+
+function PotatoShotgun.client_onRefresh( self )
 	self:loadAnimations()
 end
 
-function Sniper.loadAnimations( self )
+function PotatoShotgun.loadAnimations( self )
 
 	self.tpAnimations = createTpAnimations(
 		self.tool,
 		{
-			shoot = { "spudsniper_shoot", { crouch = "spudsniper_crouch_shoot" } },
-			aim = { "spudsniper_aim", { crouch = "spudsniper_crouch_aim" } },
-			aimShoot = { "spudsniper_aim_shoot", { crouch = "spudsniper_crouch_aim_shoot" } },
-			idle = { "spudsniper_idle" },
-			pickup = { "spudsniper_pickup", { nextAnimation = "idle" } },
-			putdown = { "spudsniper_putdown" },
+			shoot = { "spudgun_shoot", { crouch = "spudgun_crouch_shoot" } },
+			aim = { "spudgun_aim", { crouch = "spudgun_crouch_aim" } },
+			aimShoot = { "spudgun_aim_shoot", { crouch = "spudgun_crouch_aim_shoot" } },
+			idle = { "spudgun_idle" },
+			pickup = { "spudgun_pickup", { nextAnimation = "idle" } },
+			putdown = { "spudgun_putdown" },
 
 			reload = { "spudgun_reload", { nextAnimation = "idle" } },
 		}
 	)
 	local movementAnimations = {
-		idle = "spudsniper_idle",
-		idleRelaxed = "spudsniper_relax",
+		idle = "spudgun_idle",
+		idleRelaxed = "spudgun_relax",
 
-		sprint = "spudsniper_sprint",
-		runFwd = "spudsniper_run_fwd",
-		runBwd = "spudsniper_run_bwd",
+		sprint = "spudgun_sprint",
+		runFwd = "spudgun_run_fwd",
+		runBwd = "spudgun_run_bwd",
 
-		jump = "spudsniper_jump",
-		jumpUp = "spudsniper_jump_up",
-		jumpDown = "spudsniper_jump_down",
+		jump = "spudgun_jump",
+		jumpUp = "spudgun_jump_up",
+		jumpDown = "spudgun_jump_down",
 
-		land = "spudsniper_jump_land",
-		landFwd = "spudsniper_jump_land_fwd",
-		landBwd = "spudsniper_jump_land_bwd",
+		land = "spudgun_jump_land",
+		landFwd = "spudgun_jump_land_fwd",
+		landBwd = "spudgun_jump_land_bwd",
 
-		crouchIdle = "spudsniper_crouch_idle",
-		crouchFwd = "spudsniper_crouch_fwd",
-		crouchBwd = "spudsniper_crouch_bwd"
+		crouchIdle = "spudgun_crouch_idle",
+		crouchFwd = "spudgun_crouch_fwd",
+		crouchBwd = "spudgun_crouch_bwd"
 	}
 
 	for name, animation in pairs( movementAnimations ) do
@@ -115,20 +220,20 @@ function Sniper.loadAnimations( self )
 		self.fpAnimations = createFpAnimations(
 			self.tool,
 			{
-				equip = { "spudsniper_pickup", { nextAnimation = "idle" } },
-				unequip = { "spudsniper_putdown" },
+				equip = { "spudgun_pickup", { nextAnimation = "idle" } },
+				unequip = { "spudgun_putdown" },
 
-				idle = { "spudsniper_idle", { looping = true } },
-				shoot = { "spudsniper_shoot", { nextAnimation = "idle" } },
+				idle = { "spudgun_idle", { looping = true } },
+				shoot = { "spudgun_shoot", { nextAnimation = "idle" } },
 
-				aimInto = { "spudsniper_aim_into", { nextAnimation = "aimIdle" } },
-				aimExit = { "spudsniper_aim_exit", { nextAnimation = "idle", blendNext = 0 } },
-				aimIdle = { "spudsniper_aim_idle", { looping = true} },
-				aimShoot = { "spudsniper_aim_shoot", { nextAnimation = "aimIdle"} },
+				aimInto = { "spudgun_aim_into", { nextAnimation = "aimIdle" } },
+				aimExit = { "spudgun_aim_exit", { nextAnimation = "idle", blendNext = 0 } },
+				aimIdle = { "spudgun_aim_idle", { looping = true} },
+				aimShoot = { "spudgun_aim_shoot", { nextAnimation = "aimIdle"} },
 
-				sprintInto = { "spudsniper_sprint_into", { nextAnimation = "sprintIdle",  blendNext = 0.2 } },
-				sprintExit = { "spudsniper_sprint_exit", { nextAnimation = "idle",  blendNext = 0 } },
-				sprintIdle = { "spudsniper_sprint_idle", { looping = true } },
+				sprintInto = { "spudgun_sprint_into", { nextAnimation = "sprintIdle",  blendNext = 0.2 } },
+				sprintExit = { "spudgun_sprint_exit", { nextAnimation = "idle",  blendNext = 0 } },
+				sprintIdle = { "spudgun_sprint_idle", { looping = true } },
 
 				reload = { "spudgun_reload", { nextAnimation = "idle" } },
 			}
@@ -136,12 +241,12 @@ function Sniper.loadAnimations( self )
 	end
 
 	self.normalFireMode = {
-		fireCooldown = 1,
+		fireCooldown = 0.50,
 		spreadCooldown = 0.18,
 		spreadIncrement = 2.6,
 		spreadMinAngle = .25,
 		spreadMaxAngle = 8,
-		fireVelocity = baseFireVel,
+		fireVelocity = 130.0,
 
 		minDispersionStanding = 0.1,
 		minDispersionCrouching = 0.04,
@@ -151,12 +256,12 @@ function Sniper.loadAnimations( self )
 	}
 
 	self.aimFireMode = {
-		fireCooldown = 1,
+		fireCooldown = 0.50,
 		spreadCooldown = 0.18,
 		spreadIncrement = 1.3,
 		spreadMinAngle = 0,
-		spreadMaxAngle = self.cl.maxSpread,
-		fireVelocity =  baseFireVel,
+		spreadMaxAngle = 8,
+		fireVelocity =  130.0,
 
 		minDispersionStanding = 0.01,
 		minDispersionCrouching = 0.01,
@@ -183,166 +288,7 @@ function Sniper.loadAnimations( self )
 
 end
 
-function Sniper:client_onToggle()
-	local text = not self.cl.data.autoReload and "#ff0000OFF" or "#00ff00ON"
-	sm.gui.display("Auto reloading is now "..text, 2.5)
-	self.metwork:sendToServer("sv_toggleAutoReload")
-
-	return true
-end
-
-function Sniper:sv_toggleAutoReload()
-	self.sv.data.autoReload = not self.sv.data.autoReload
-	self.storage:save( self.sv.data )
-	self.network:setClientData( self.sv )
-end
-
-function Sniper:client_onClientDataUpdate( data )
-	if self.tool:isLocal() then
-		self.cl.data = data.data
-		self.cl.reloading = data.reloading
-	end
-end
-
-function Sniper:sv_setPlayer( player )
-	self.sv.player = player
-	self.sv.playerInv = player:getInventory()
-end
-
-function Sniper:client_onClientDataUpdate( data )
-	if self.tool:isLocal() then
-		self.cl.data = data.data
-		self.cl.reloading = data.reloading
-	end
-end
-
-function Sniper:server_onFixedUpdate( dt )
-	if self.sv.data == nil or self.sv.player == nil then return end
-
-	local carrots = sm.container.totalQuantity( self.sv.playerInv, obj_plantables_carrot )
-	if carrots > 0 and (self.sv.reloading or self.sv.data.new) then
-		self.sv.reloadDuration = self.sv.reloadDuration + dt
-		if self.sv.reloadDuration >= reloadDuration then
-			self.sv.data.mag = carrots >= maxMagCapacity and maxMagCapacity or carrots
-			self.sv.data.new = false
-			self.sv.reloading = false
-			self.sv.reloadDuration = 0
-			self.network:setClientData( self.sv )
-		end
-	end
-end
-
-function Sniper:client_onFixedUpdate( dt )
-	if self.cl.data == nil or self.fireCooldownTimer == nil then return end
-
-	local carrots = sm.container.totalQuantity( self.cl.playerInv, obj_plantables_carrot )
-	self.cl.data.mag = carrots < 4 and carrots or self.cl.data.mag
-
-	if not self.cl.reloading and self.cl.data.mag == 0 and carrots > 0 and self.cl.data.autoReload and self.fireCooldownTimer <= 0  then
-		self:cl_reload()
-	end
-
-	local character = self.cl.player:getCharacter()
-	self.cl.breathHold = character ~= nil and character:isCrouching() and character:isAiming()
-
-	if self.cl.inaccurate then
-		self.cl.inaccuracyDuration = self.cl.inaccuracyDuration - dt
-		self.cl.maxSpread = 15
-		self.aimFireMode.spreadMinAngle = self.cl.maxSpread / 4
-		self.normalFireMode.spreadMinAngle = self.cl.maxSpread / 4
-		if self.cl.inaccuracyDuration <= 0 then
-			self.cl.inaccurate = false
-			self.cl.inaccuracyDuration = self.normalFireMode.fireCooldown + 0.5
-		end
-	else
-		self.cl.maxSpread = 8
-		self.aimFireMode.spreadMinAngle = 0
-		self.normalFireMode.spreadMinAngle = 0
-	end
-
-	if self.cl.breathHold and not self.cl.reloading and self.fireCooldownTimer <= 0.0 then
-		self.cl.breathHoldCount = self.cl.breathHoldCount < maxBreathHold and self.cl.breathHoldCount + dt or maxBreathHold
-
-		if self.cl.breathHoldCount < maxBreathHold + 0.025 then
-			self.aimFireMode.spreadMaxAngle = self.cl.maxSpread - self.cl.breathHoldCount
-			self.normalFireMode.spreadMaxAngle = self.cl.maxSpread - self.cl.breathHoldCount
-			self.aimFireMode.fireVelocity = baseFireVel + fireVelIncrease * self.cl.breathHoldCount
-		end
-	else
-		self.aimFireMode.spreadMaxAngle = self.cl.maxSpread
-		self.normalFireMode.spreadMaxAngle = self.cl.maxSpread
-		self.cl.breathHoldCount = 0
-	end
-end
-
-function Sniper:client_onReload()
-	self:cl_reload()
-
-	return true
-end
-
-function Sniper:cl_reload()
-	if self.cl.data.mag == maxMagCapacity then return true end
-
-	if self.aiming then
-		self.aiming = false
-		self.tpAnimations.animations.idle.time = 0
-
-		self:onAim( self.aiming )
-		self.tool:setMovementSlowDown( self.aiming )
-		self.network:sendToServer( "sv_n_onAim", self.aiming )
-	end
-
-	local pos = sm.localPlayer.getPlayer().character:getWorldPosition()
-	self:onReload( pos )
-	setFpAnimation( self.fpAnimations, "reload", 0.05 )
-	self.network:sendToServer("sv_n_onReload", pos)
-end
-
-function Sniper.sv_n_onReload( self, pos )
-	self.sv.reloading = true
-	self.network:setClientData( self.sv )
-	self.network:sendToClients( "cl_n_onReload", pos )
-end
-
-function Sniper.cl_n_onReload( self, pos )
-	if not self.tool:isLocal() and self.tool:isEquipped() then
-		self:onReload()
-	end
-end
-
-function Sniper.onReload( self, pos )
-	setTpAnimation( self.tpAnimations, "reload", 10.0 )
-	sm.audio.play("PotatoRifle - Reload", pos)
-end
-
-function Sniper:sv_shoot( args )
-	self.sv.data.mag = self.sv.data.mag - 1
-	self.sv.inaccuracyDuration = self.normalFireMode.fireCooldown + 0.5
-
-	sm.projectile.customProjectileAttack(
-		{ hvs = hvs_growing_carrot },
-		"seed",
-		Damage,
-		args.firePos,
-		args.dir,
-		self.sv.player
-	)
-
-	sm.container.beginTransaction()
-	sm.container.spend( self.sv.playerInv, obj_plantables_carrot, 1 )
-	sm.container.endTransaction()
-
-	self.network:setClientData( self.sv )
-end
-
-function Sniper:server_onDestroy()
-	sm.container.beginTransaction()
-	sm.container.collect( self.sv.playerInv, obj_plantables_carrot, self.sv.data.mag )
-	sm.container.endTransaction()
-end
-
-function Sniper.client_onUpdate( self, dt )
+function PotatoShotgun.client_onUpdate( self, dt )
 	local potatoes = sm.container.totalQuantity( self.sv.playerInv, obj_plantables_potato )
 	if self.cl.data.mag == 0 and potatoes > 0 and not self.cl.data.autoReload and not self.cl.reloading then
 		local keyBind = "R" --sm.gui.getKeyBinding("Reload")
@@ -405,7 +351,8 @@ function Sniper.client_onUpdate( self, dt )
 		self.shootEffectFP:setRotation( rot )
 	end
 	local pos = self.tool:getTpBonePos( "pejnt_barrel" )
-	local dir = self.tool:getTpBoneDir( "pejnt_barrel" )
+	--local dir = self.tool:getTpBoneDir( "pejnt_barrel" )
+	local dir = sm.localPlayer.getDirection()
 
 	effectPos = pos + dir * 0.2
 
@@ -462,7 +409,7 @@ function Sniper.client_onUpdate( self, dt )
 	end
 
 	-- Sprint block
-	local blockSprint = self.aiming or self.sprintCooldownTimer > 0.0
+	local blockSprint = self.aiming or self.sprintCooldownTimer > 0.0 or self.cl.reloading
 	self.tool:setBlockSprint( blockSprint )
 
 	local playerDir = self.tool:getDirection()
@@ -566,8 +513,8 @@ function Sniper.client_onUpdate( self, dt )
 	self.tool:updateFpCamera( 30.0, sm.vec3.new( 0.0, 0.0, 0.0 ), self.aimWeight, bobbing )
 end
 
-function Sniper.client_onEquip( self, animate )
-
+function PotatoShotgun.client_onEquip( self, animate )
+	
 	if animate then
 		sm.audio.play( "PotatoRifle - Equip", self.tool:getPosition() )
 	end
@@ -585,6 +532,7 @@ function Sniper.client_onEquip( self, animate )
 	for k,v in pairs( renderablesFp ) do currentRenderablesFp[#currentRenderablesFp+1] = v end
 	for k,v in pairs( renderables ) do currentRenderablesTp[#currentRenderablesTp+1] = v end
 	for k,v in pairs( renderables ) do currentRenderablesFp[#currentRenderablesFp+1] = v end
+
 	self.tool:setTpRenderables( currentRenderablesTp )
 
 	self:loadAnimations()
@@ -592,14 +540,14 @@ function Sniper.client_onEquip( self, animate )
 	setTpAnimation( self.tpAnimations, "pickup", 0.0001 )
 
 	if self.tool:isLocal() then
-		-- Sets Sniper renderable, change this to change the mesh
+		-- Sets PotatoShotgun renderable, change this to change the mesh
 		self.tool:setFpRenderables( currentRenderablesFp )
 		swapFpAnimation( self.fpAnimations, "unequip", "equip", 0.2 )
 	end
 end
 
-function Sniper.client_onUnequip( self, animate )
-
+function PotatoShotgun.client_onUnequip( self, animate )
+	
 	if animate then
 		sm.audio.play( "PotatoRifle - Unequip", self.tool:getPosition() )
 	end
@@ -612,35 +560,34 @@ function Sniper.client_onUnequip( self, animate )
 	end
 end
 
-function Sniper.sv_n_onAim( self, aiming )
+function PotatoShotgun.sv_n_onAim( self, aiming )
 	self.network:sendToClients( "cl_n_onAim", aiming )
 end
 
-function Sniper.cl_n_onAim( self, aiming )
+function PotatoShotgun.cl_n_onAim( self, aiming )
 	if not self.tool:isLocal() and self.tool:isEquipped() then
 		self:onAim( aiming )
 	end
 end
 
-function Sniper.onAim( self, aiming )
+function PotatoShotgun.onAim( self, aiming )
 	self.aiming = aiming
 	if self.tpAnimations.currentAnimation == "idle" or self.tpAnimations.currentAnimation == "aim" or self.tpAnimations.currentAnimation == "relax" and self.aiming then
 		setTpAnimation( self.tpAnimations, self.aiming and "aim" or "idle", 5.0 )
 	end
 end
 
-function Sniper.sv_n_onShoot( self, dir )
+function PotatoShotgun.sv_n_onShoot( self, dir )
 	self.network:sendToClients( "cl_n_onShoot", dir )
 end
 
-function Sniper.cl_n_onShoot( self, dir )
+function PotatoShotgun.cl_n_onShoot( self, dir )
 	if not self.tool:isLocal() and self.tool:isEquipped() then
 		self:onShoot( dir )
 	end
 end
 
-function Sniper.onShoot( self, dir )
-
+function PotatoShotgun.onShoot( self, dir )
 	self.tpAnimations.animations.idle.time = 0
 	self.tpAnimations.animations.shoot.time = 0
 	self.tpAnimations.animations.aimShoot.time = 0
@@ -648,14 +595,14 @@ function Sniper.onShoot( self, dir )
 	setTpAnimation( self.tpAnimations, self.aiming and "aimShoot" or "shoot", 10.0 )
 
 	if self.tool:isInFirstPersonView() then
-			self.shootEffectFP:start()
-		else
-			self.shootEffect:start()
+		self.shootEffectFP:start()
+	else
+		self.shootEffect:start()
 	end
 
 end
 
-function Sniper.calculateFirePosition( self )
+function PotatoShotgun.calculateFirePosition( self )
 	local crouching = self.tool:isCrouching()
 	local firstPerson = self.tool:isInFirstPersonView()
 	local dir = sm.localPlayer.getDirection()
@@ -682,7 +629,7 @@ function Sniper.calculateFirePosition( self )
 	return firePosition
 end
 
-function Sniper.calculateTpMuzzlePos( self )
+function PotatoShotgun.calculateTpMuzzlePos( self )
 	local crouching = self.tool:isCrouching()
 	local dir = sm.localPlayer.getDirection()
 	local pitch = math.asin( dir.z )
@@ -716,7 +663,7 @@ function Sniper.calculateTpMuzzlePos( self )
 	return fakePosition
 end
 
-function Sniper.calculateFpMuzzlePos( self )
+function PotatoShotgun.calculateFpMuzzlePos( self )
 	local fovScale = ( sm.camera.getFov() - 45 ) / 45
 
 	local up = sm.localPlayer.getUp()
@@ -745,14 +692,14 @@ function Sniper.calculateFpMuzzlePos( self )
 	return self.tool:getFpBonePos( "pejnt_barrel" ) + sm.vec3.lerp( muzzlePos45, muzzlePos90, fovScale )
 end
 
-function Sniper.cl_onPrimaryUse( self, state )
-	if self.tool:getOwner().character == nil or self.cl.reloading then
+function PotatoShotgun.cl_onPrimaryUse( self, state )
+	if self.tool:getOwner().character == nil then
 		return
 	end
+	if self.fireCooldownTimer <= 0.0 and state == sm.tool.interactState.start and self.cl.data.mag > 0 and not self.cl.reloading then
 
-	if self.fireCooldownTimer <= 0.0 and state == sm.tool.interactState.start then
+		if not sm.game.getEnableAmmoConsumption() or sm.container.canSpend( sm.localPlayer.getInventory(), obj_plantables_potato, 2 ) then
 
-		if self.cl.data.mag > 0 and (not sm.game.getEnableAmmoConsumption() or sm.container.canSpend( sm.localPlayer.getInventory(), obj_plantables_carrot, 1 ) ) then
 			local firstPerson = self.tool:isInFirstPersonView()
 
 			local dir = sm.localPlayer.getDirection()
@@ -781,7 +728,7 @@ function Sniper.cl_onPrimaryUse( self, state )
 				end
 			end
 
-			dir = dir:rotate( math.rad( 0.01 ), sm.camera.getRight() ) -- 1 m sight calibration
+			dir = dir:rotate( math.rad( 0.955 ), sm.camera.getRight() ) -- 50 m sight calibration
 
 			-- Spread
 			local fireMode = self.aiming and self.aimFireMode or self.normalFireMode
@@ -795,9 +742,7 @@ function Sniper.cl_onPrimaryUse( self, state )
 
 			local owner = self.tool:getOwner()
 			if owner then
-				--sm.projectile.projectileAttack( "carrot", Damage, firePos, dir * fireMode.fireVelocity, owner, fakePosition, fakePositionSelf )
-				self.network:sendToServer("sv_shoot", { firePos = firePos, dir = dir * fireMode.fireVelocity })
-				self.cl.inaccurate = true
+				sm.projectile.projectileAttack( "fries", Damage, firePos, dir * fireMode.fireVelocity, owner, fakePosition, fakePositionSelf )
 			end
 
 			-- Timers
@@ -809,6 +754,8 @@ function Sniper.cl_onPrimaryUse( self, state )
 			self:onShoot( dir )
 			self.network:sendToServer( "sv_n_onShoot", dir )
 
+			self.network:sendToServer("sv_shoot")
+
 			-- Play FP shoot animation
 			setFpAnimation( self.fpAnimations, self.aiming and "aimShoot" or "shoot", 0.05 )
 		else
@@ -819,9 +766,7 @@ function Sniper.cl_onPrimaryUse( self, state )
 	end
 end
 
-function Sniper.cl_onSecondaryUse( self, state )
-	if self.cl.reloading then return end
-
+function PotatoShotgun.cl_onSecondaryUse( self, state )
 	if state == sm.tool.interactState.start and not self.aiming then
 		self.aiming = true
 		self.tpAnimations.animations.idle.time = 0
@@ -841,11 +786,7 @@ function Sniper.cl_onSecondaryUse( self, state )
 	end
 end
 
-function Sniper.client_onEquippedUpdate( self, primaryState, secondaryState )
-	if self.cl.breathHold then
-		sm.gui.displayAlertText( "Breath hold: #ff9d00"..tostring(("%.2f"):format(self.cl.breathHoldCount)).." #ffffff/ "..tostring(maxBreathHold), 1 )
-	end
-
+function PotatoShotgun.client_onEquippedUpdate( self, primaryState, secondaryState )
 	if not self.cl.reloading then
 		sm.gui.setProgressFraction( self.cl.data.mag/maxMagCapacity )
 	else

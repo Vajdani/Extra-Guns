@@ -30,6 +30,8 @@
 			{ "name": "spudsniper_jump_land", 				"file": "$SURVIVAL_DATA/Weapons/SpudSniper/Mesh/Anim/ani_char_male_spudgun_jump_land.dae" },
 			{ "name": "spudsniper_jump_land_fwd", 			"file": "$SURVIVAL_DATA/Weapons/SpudSniper/Mesh/Anim/ani_char_male_spudgun_jump_land.dae" },
 			{ "name": "spudsniper_jump_land_bwd", 			"file": "$SURVIVAL_DATA/Weapons/SpudSniper/Mesh/Anim/ani_char_male_spudgun_jump_land.dae" }
+
+			,{ "name": "spudgun_reload", 				"file": "$GAME_DATA/Character/Char_Male/Animations/Thirdperson/Spudgun/ani_char_male_spudgun_reload.dae" }
 		],
 		"maxViewDistance": 1000.0
 	}]

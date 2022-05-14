@@ -141,6 +141,7 @@
 			{ "name" : "spudgun_aim_shoot", 			"file" : "$GAME_DATA/Character/Char_Male/Animations/Firstperson/Spudgun/ani_char_male_fp_spudgun_aim_shoot.dae" },
 			{ "name" : "spudgun_aim_idle", 				"file" : "$GAME_DATA/Character/Char_Male/Animations/Firstperson/Spudgun/ani_char_male_fp_spudgun_aim_idle.dae" },
 
+			{ "name": "spudgun_reload", 				"file": "$GAME_DATA/Character/Char_Male/Animations/Thirdperson/Spudgun/ani_char_male_spudgun_reload.dae" },
 
 			// Swim
 
