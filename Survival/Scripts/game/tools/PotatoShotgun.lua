@@ -16,8 +16,13 @@ local renderables = {
 	"$GAME_DATA/Character/Char_Tools/Char_spudgun/Tank/Tank_basic/char_spudgun_tank_basic.rend"
 }
 
-local renderablesTp = {"$GAME_DATA/Character/Char_Male/Animations/char_male_tp_spudgun.rend", "$GAME_DATA/Character/Char_Tools/Char_spudgun/char_spudgun_tp_animlist.rend"}
-local renderablesFp = {"$GAME_DATA/Character/Char_Tools/Char_spudgun/char_spudgun_fp_animlist.rend"}
+local renderablesTp = {
+	"$GAME_DATA/Character/Char_Male/Animations/char_male_tp_spudgun.rend",
+	"$GAME_DATA/Character/Char_Tools/Char_spudgun/char_spudgun_tp_animlist.rend"
+}
+local renderablesFp = {
+	"$GAME_DATA/Character/Char_Tools/Char_spudgun/char_spudgun_fp_animlist.rend"
+}
 
 sm.tool.preloadRenderables( renderables )
 sm.tool.preloadRenderables( renderablesTp )
